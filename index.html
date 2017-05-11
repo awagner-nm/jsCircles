@@ -158,15 +158,15 @@
 		this.changeColor = function(){
 			var el = document.getElementById(html_id);
 
-			el.setAttribute("style", "fill: red");
+			//el.setAttribute("style", "fill: red");
 
 			//toggle colors between black & red
-			//if(el.getAttribute("style") == "fill: black"){
-			//	el.setAttribute("style", "fill: red");
-			//}
-			//else{
-			//	el.setAttribute("style", "fill: black");
-			//}
+			if(el.getAttribute("style") == "fill: black"){
+				el.setAttribute("style", "fill: red");
+			}
+			else{
+				el.setAttribute("style", "fill: black");
+			}
 		}
 
 		//creates the SVG element and returns it
@@ -207,7 +207,7 @@
 							
 							
 							//merge on collision
-//							mergeColl(circles[circle], circles[key], circles);
+							mergeColl(circles[circle], circles[key], circles);
 
 							//bounce off one another on collision
 //							circles[circle].bounceOff();
@@ -254,7 +254,7 @@
 
 	//on click function creat a new ball into the playgroud
 	document.onclick = function(e) {
-	 	circleR = time_pressed/100;
+	 	circleR = time_pressed/10;
 	 	playground.createNewCircle(e.x,e.y, circleR);
 	}
 
