@@ -8,7 +8,11 @@
 
 	<script>
 
+	//set the playgroud by using the width & height of the current screen
+	document.getElementById("svg").setAttribute("width", document.body.clientWidth);
+	document.getElementById("svg").setAttribute("height", document.body.clientHeight);
 
+	//variables and functions to determine the down time for pressing the mouse
 	var mousedown_time;
 	var time_pressed;
 
@@ -26,14 +30,73 @@
 	}
 
 
+	//helper function to determine if two circles overlap
+	//Boleen return true if overlap/touching circles
+	function overLappingCircles(cir1, cir2){
 
+		//determine the distance between the center points of the two circles
+		// a-sq + b-sq = c-sq
+		var a = cir2.info.cx - cir1.info.cx;
+		var b = cir2.info.cy - cir1.info.cy;
+		var distance = Math.sqrt((a*a) + (b*b));
 
+		//sum the radius together
+		var radiusSum = cir1.info.r + cir2.info.r;
 
+		//if the distance between the center of the circles is greater than the sum of their radius 
+		//they can not be touching
+		if(distance>radiusSum){
+			return false;
+		}
+		else{
+			return true;
+		}
+		
+	}
 
+	//function to delete the circle from the array of circle objects
+	//as well as removing the element from the screen 
+	function disappColl(cir, arrOfCir){
+		var found=false;
+
+		for(var i=0; i<arrOfCir.length; i++){
+		 	if(found || arrOfCir[i] == cir){
+		 		found=true;
+		 		arrOfCir[i] = arrOfCir[i+1];
+		 	}
+		}
+
+		document.getElementById('svg').removeChild(document.getElementById(cir.info.id));
+
+		arrOfCir.length-=1;
+
+		return arrOfCir;
+	}
+	
+	//function to merge the two circles that touched (via deleting the smaller circle)
+	function mergeColl(cir1, cir2, arrOfCir){
+		var el;
+
+		if(cir1.info.r >= cir2.info.r){
+			el = document.getElementById(cir1.info.id);
+			disappColl(cir2, arrOfCir);
+			cir1.info.r += cir2.info.r;
+			el.setAttribute("r", cir1.info.r);
+
+		}else{
+			el = document.getElementById(cir2.info.id);
+			disappColl(cir1, arrOfCir);
+			cir2.info.r += cir1.info.r;
+			el.setAttribute("r", cir2.info.r);
+		}
+
+	}
+
+	//Circle Class
 	function Circle(cx, cy, html_id, r)
 	{
 		var html_id = html_id;
-		this.info = { cx: cx,  cy: cy, r: r};
+		this.info = { cx: cx,  cy: cy, r: r, id: html_id};
 		
 		//private function that generates a random number
 		var randomNumberBetween = function(min, max){
@@ -59,11 +122,10 @@
 			document.getElementById('svg').appendChild(circle);
 		}
 
-		this.update = function(time){
+		this.update = function(){
 			var el = document.getElementById(html_id);
 
 			//see if the circle is going outside the browser. if it is, reverse the velocity
-
 			if( (this.info.cx + this.info.r)  > document.body.clientWidth || (this.info.cx - this.info.r) < 0 )
 			{
 				this.info.velocity.x = this.info.velocity.x * -1;
@@ -73,11 +135,38 @@
 				this.info.velocity.y = this.info.velocity.y * -1;
 			}
 
-			this.info.cx = this.info.cx + this.info.velocity.x*time;
-			this.info.cy = this.info.cy + this.info.velocity.y*time;
+			this.info.cx = this.info.cx + this.info.velocity.x;
+			this.info.cy = this.info.cy + this.info.velocity.y;
 
 			el.setAttribute("cx", this.info.cx);
 			el.setAttribute("cy", this.info.cy);
+		}
+
+		this.bounceOff = function(){
+			var el = document.getElementById(html_id);
+
+			this.info.velocity.x = this.info.velocity.x * -1;
+			this.info.velocity.y = this.info.velocity.y * -1;
+
+			this.info.cx = this.info.cx + this.info.velocity.x;
+			this.info.cy = this.info.cy + this.info.velocity.y;
+
+			el.setAttribute("cx", this.info.cx);
+			el.setAttribute("cy", this.info.cy);
+		}
+
+		this.changeColor = function(){
+			var el = document.getElementById(html_id);
+
+			el.setAttribute("style", "fill: red");
+
+			//toggle colors between black & red
+			//if(el.getAttribute("style") == "fill: black"){
+			//	el.setAttribute("style", "fill: red");
+			//}
+			//else{
+			//	el.setAttribute("style", "fill: black");
+			//}
 		}
 
 		//creates the SVG element and returns it
@@ -93,7 +182,7 @@
 	    this.initialize();
 	}
 	
-	//function 
+	//PlayGround Class 
 	function PlayGround()
 	{
 		var counter = 0;  //counts the number of circles created
@@ -103,37 +192,71 @@
 		this.loop = function(){
 			for(circle in circles)
 			{
-				circles[circle].update(1);
+				circles[circle].update();
+
+				//check if that circle is now touching any other circle
+				for(key in circles){
+
+					//don't check the circle against itself for over lapping
+					if(circles[circle].info.id != circles[key].info.id){
+						if(overLappingCircles( circles[circle], circles[key])){
+
+							//disappear on collision
+//							disappColl(circles[circle], circles);
+//							disappColl(circles[key], circles);
+							
+							
+							//merge on collision
+//							mergeColl(circles[circle], circles[key], circles);
+
+							//bounce off one another on collision
+//							circles[circle].bounceOff();
+//							circles[key].bounceOff();
+
+							//change color on collision
+//							circles[circle].changeColor();
+//							circles[key].changeColor();
+
+							//combining gracefully
+
+							//save some processing and break out of the check because if a cicle touches 1, or many
+							//circles the reaction is the same.  no need to do the process for each additional touches until the next move
+							break;
+						}
+					}
+				}
 			}
+
 		}
 
 		this.createNewCircle = function(x,y, radius){
+
 			var new_circle = new Circle(x,y,counter++, radius);
 			circles.push(new_circle);
-		 	console.log('created a new circle!', new_circle);
+
+		 	//console.log('created a new circle!', new_circle);
 		}
 
 		//create one circle when the game starts
 		this.createNewCircle(document.body.clientWidth/2, document.body.clientHeight/2, 10);
+
+		//create a second circle when the game starts
+	//	this.createNewCircle(document.body.clientWidth/4, document.body.clientHeight/4, 20);
+
+
 	}
 
 	//setup the playground new - PlayGround is created with 1 ball in play
 	var playground = new PlayGround();
+	
 	//set the ball in motion 
 	setInterval(playground.loop, 15);
 
-	//set the playgroud by using the width & height of the current screen
-	document.getElementById("svg").setAttribute("width", document.body.clientWidth);
-	document.getElementById("svg").setAttribute("height", document.body.clientHeight);
-
 	//on click function creat a new ball into the playgroud
 	document.onclick = function(e) {
-		circleR = time_pressed/100;
-		console.log(`downtime: ${time_pressed} radius: ${circleR}`);
-
-		playground.createNewCircle(e.x,e.y, circleR);
+	 	circleR = time_pressed/100;
+	 	playground.createNewCircle(e.x,e.y, circleR);
 	}
-
 
 	
 	</script>
